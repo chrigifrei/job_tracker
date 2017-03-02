@@ -26,25 +26,27 @@ Since Oracle does not provide a tooling for supervising their loadjobs into the 
 - jobs: cyclic or daily (timed) jobs to track
 
 ### Global Config
-| Param | Value | Description |
-| jobs_start_keyword | string | The given keyword will advice the tracker to mark the job as started. |
-| jobs_error_keyword | string | The given keyword will indicate the occurance of an error. |
-| jobs_end_keyword | string | The given keyword will advice the tracker to mark the job as completed with success |
-| no_timeout_for_cyclic_jobs_from_in_hh:mm | time as "hh:00" | during this timeframe no alarms will be triggered for job timeouts |
-| no_timeout_for_cyclic_jobs_until_in_hh:mm | time as "hh:00" | during this timeframe no alarms will be triggered for job timeouts |
-| controller_message_grace_period_in_sec | seconds as float | covers the time drift between the occurance of a status message and the processing of the message |
+Param | Value | Description
+ --- | --- | ---
+jobs_start_keyword | string | The given keyword will advice the tracker to mark the job as started.
+jobs_error_keyword | string | The given keyword will indicate the occurance of an error.
+jobs_end_keyword | string | The given keyword will advice the tracker to mark the job as completed with success
+no_timeout_for_cyclic_jobs_from_in_hh:mm | time as "hh:00" | during this timeframe no alarms will be triggered for job timeouts
+no_timeout_for_cyclic_jobs_until_in_hh:mm | time as "hh:00" | during this timeframe no alarms will be triggered for job timeouts
+controller_message_grace_period_in_sec | seconds as float | covers the time drift between the occurance of a status message and the processing of the message
 
 ### Source Hosts
-NOTE: The timedrift between the host running job_tracker and its source hosts cannot be greater than <controller_message_grace_period_in_sec>  
+_NOTE_: The timedrift between the host running job_tracker and its source hosts cannot be greater than `<controller_message_grace_period_in_sec>`
 
 ### Jobs
-| Param | Value | Description |
-| cyclic_or_daily | "cyclic" or "daily" | See params below for diferences between the two. |
-| cyclic_interval_in_hh:mm:ss | time in "hh:mm:ss" | Job will run every <time> (like a cronjob). |
-| daily_start_time_in_hh:mm | time in "hh:mm" | Job will start at <time>  (scheduled). |
-| start_max_delay_in_hh:mm:ss | time in "hh:mm:ss" | Only for daily jobs. Tracker will wait <time> for the <start_keyword> before alarming. |
-| timeout_in_hh:mm:ss | time in "hh:mm:ss" | Tracker will wait <time> for the <end_keyword> before alarming. |
-| max_errors_before_alerting | number | Tracker will count <number> of errorous events before alarming. |
+Param | Value | Description
+ --- | --- | ---
+cyclic_or_daily | "cyclic" or "daily" | See params below for diferences between the two.
+cyclic_interval_in_hh:mm:ss | time in "hh:mm:ss" | Job will run every <time> (like a cronjob).
+daily_start_time_in_hh:mm | time in "hh:mm" | Job will start at <time>  (scheduled).
+start_max_delay_in_hh:mm:ss | time in "hh:mm:ss" | Only for daily jobs. Tracker will wait <time> for the <start_keyword> before alarming.
+timeout_in_hh:mm:ss | time in "hh:mm:ss" | Tracker will wait <time> for the <end_keyword> before alarming.
+max_errors_before_alerting | number | Tracker will count <number> of errorous events before alarming.
 
 
 ## JOB_TRACKER - SETUP
