@@ -1,0 +1,190 @@
+---
+# configures Oracle related alarming using 
+#   - checkmk event console
+#   - DWH load job tracker (named: job_tracker)
+
+
+- name: check whether the event console is enabled
+  shell: "/usr/bin/omd config {{ checkmk.site }} show MKEVENTD"
+  register: shellOutput
+  delegate_to: "{{ hostvars[groups['monitoringserver'][0]].inventory_hostname }}"
+  ignore_errors: yes
+
+# - fail: msg='CheckMK event console not enabled'
+#   when: "'off' in shellOutput.stdout"
+
+- name: create dba group
+  group:
+    name=dba
+    gid=140
+    state=present
+
+- name: create oem status checks directories 
+  file:   
+    state=directory
+    path={{ item }}
+    owner=root
+    group=dba
+    recurse=yes
+  with_items:
+    - "{{ job_tracker.root }}"
+    - "{{ job_tracker.status_dir }}"
+
+- name: get python version
+  command: "bash -c 'python --version 2>&1 | cut -d\".\" -f1,2'"
+  register: python_version_result
+
+# - debug:
+#     var: python_version_result
+
+- name: install argparse python lib if python version < 2.7
+  copy:
+    src=argparse.py
+    dest=/usr/lib/python{{ python_version_result.stdout | replace('Python ', '') }}/site-packages
+    owner=root
+    group=root
+    mode=0644
+  when: "{{ python_version_result.stdout | replace('Python ', '') | version_compare('2.7', '<') }}"
+
+- name: deploy custom script for Oracle EM
+  template: 
+    src=send-notification.py
+    dest={{ job_tracker.root }}/
+    owner=root
+    group=dba
+    mode=0750
+
+- name: create send-notification symlink
+  file:
+    state=link
+    src={{ job_tracker.root }}/send-notification.py
+    dest=/usr/local/bin/send-notification
+
+- name: create logfile for Oracle related events from EM and DWH (ODAs)
+  file:
+    path={{ job_tracker.status_dir }}/oem-dwh-status.log
+    state=touch
+    owner=root
+    group=dba
+    mode=0664
+
+- name: create logfile for Oracle related events from EM and DWH (ODIs)
+  file:
+    path={{ job_tracker.status_dir }}/odi-jobs-status.log
+    state=touch
+    owner=root
+    group=dba
+    mode=0664
+
+
+#
+#  setup job_tracker
+#
+- name: job_tracker setup - get the env
+  command: "bash -c 'hostname | cut -d\"-\" -f3'"
+  register: env
+
+# - debug:
+#     var: env
+
+- name: job_tracker setup - create python site-packages directories
+  file: 
+    state=directory
+    path=/usr/lib/python{{ python_version_result.stdout | replace('Python ', '') }}/site-packages/{{ item }}
+    owner=root
+    group=root
+  with_items:  
+   - "daemon"
+   - "lockfile"
+
+- name: job_tracker setup - install daemon package
+  copy:
+    src={{ item }}
+    dest=/usr/lib/python{{ python_version_result.stdout | replace('Python ', '') }}/site-packages/daemon
+    owner=root
+    group=root
+    mode=0644
+  with_fileglob:
+     - "daemon/*.py"
+
+- name: job_tracker setup - install lockfile package
+  copy:
+    src={{ item }}
+    dest=/usr/lib/python{{ python_version_result.stdout | replace('Python ', '') }}/site-packages/lockfile
+    owner=root
+    group=root
+    mode=0644
+  with_fileglob:
+     - "lockfile/*.py"
+
+- name: job_tracker setup - create job_tracker directory
+  file: 
+    state=directory
+    path={{ job_tracker.root }}/job_tracker
+    owner=root
+    group=root
+    mode=0755
+
+- name: job_tracker setup - install job_tracker package
+  copy:
+    src={{ item }}
+    dest={{ job_tracker.root }}/job_tracker
+    owner=root
+    group=root
+    mode=0644
+  with_fileglob:
+     - "job_tracker/*.py"
+
+- name: job_tracker setup - install job_tracker config
+  template:
+    src={{ item }}
+    dest={{ job_tracker.root }}/job_tracker
+    owner=root
+    group=root
+    mode=0644
+  with_fileglob:
+     - "../templates/*.cfg"
+
+- name: job_tracker setup - create config link
+  file:
+    state=link
+    src={{ job_tracker.root }}/job_tracker/{{ env.stdout }}-job_tracker.cfg
+    dest={{ job_tracker.root }}/job_tracker/job_tracker.cfg
+
+- name: job_tracker setup - install job_tracker init script
+  template:
+    src=job_tracker.init
+    dest=/etc/init.d/job_tracker
+    owner=root
+    group=root
+    mode=0755
+
+- name: job_tracker setup - setup logrotate
+  template:   
+    src="job_tracker-logrotate.cfg"
+    dest="/etc/logrotate.d/job_tracker"
+    owner=root
+    group=root
+    mode=0644
+
+- name: job_tracker setup - create checkmk local check dir
+  file: 
+    state=directory
+    path={{ checkmk.local_check_dir }}/90
+    owner=root
+    group=root
+    mode=0755
+
+- name: job_tracker setup - install job_tracker checkmk local check
+  copy:
+    src=job_tracker/job_tracker-checkmk_localcheck.py
+    dest={{ checkmk.local_check_dir }}/90
+    owner=root
+    group=root
+    mode=0755
+
+- name: job_tracker setup - enable & start job_tracker
+  service: 
+    name=job_tracker
+    state=started
+    enabled=yes

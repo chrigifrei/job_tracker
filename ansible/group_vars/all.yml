@@ -1,0 +1,11 @@
+---
+
+job_tracker:
+  root: /var/job_tracker
+  status_dir: /var/job_tracker/status
+
+checkmk:
+  site: local
+  api_user: api_user
+  host_folder: LOCAL
+  local_check_dir: /usr/share/check-mk-agent/local

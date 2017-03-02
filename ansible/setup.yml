@@ -1,0 +1,5 @@
+---
+
+- hosts: dbmgmt
+  roles: 
+  - { role: job_tracker-setup, tags: ['job_tracker-setup'] }
