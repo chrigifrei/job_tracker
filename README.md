@@ -4,7 +4,7 @@ Tracks jobs according to a given pattern (time & event based)
 Date: June 2016
 
 This ansible playbook was written for a specific customer environment consisting of
-- Nagios based CheckMK monitoring 
+- Nagios based CheckMK monitoring
 - Oracle DWH (Oracle Data Integrator ODI) monitored by Oracles Enterprise Manager (EM)
 
 Since Oracle does not provide a tooling for supervising their loadjobs into the DWH, job_tracker was developed.
@@ -54,7 +54,7 @@ job_tracker installation instructions.
 
 ### Ansible Deployment
 ```
-ansible-playbook -C -i <env>.ini -t checkmk-agent-check-oracle setup-clients-monitored.yml
+ansible-playbook -i <env>.ini setup.yml
 ```
 
 ### System V Service Operation
@@ -87,11 +87,11 @@ Status file for each job:
 /var/run/<prog>.<jobname>.state
 where by default:
   <prog>: job_tracker
-  <jobname>: name__env 
+  <jobname>: name__env
 ```
 
 Content:  
-CheckMK status message: 
+CheckMK status message:
 ```
 <status_as_int> <service_name> - <desc>
 ```
